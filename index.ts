@@ -2,28 +2,17 @@ import { spawn } from 'bun';
 import { mkdir, writeFile } from 'fs/promises';
 import path from 'path';
 import * as puppeteer from 'puppeteer';
-
-interface RaySoOptions {
-  title?: string;
-  theme?: string;
-  padding?: number;
-  language?: string;
-  background?: boolean;
-  darkMode?: boolean;
-  format?: 'png' | 'svg' | 'url'; // New option for format selection
-  size?: '2x' | '4x' | '6x'; // New option for size selection
-}
+import type { Options } from 'rayso-api';
 
 async function generateImagesForChangedFiles(
   repoPath: string,
   sourceBranch: string,
   targetBranch: string,
-  options: RaySoOptions,
+  options: Options,
   outputDir: string
 ) {
   process.chdir(repoPath);
 
-  // Ensure the output directory exists
   try {
     await mkdir(outputDir, { recursive: true });
     console.log(`Created output directory: ${outputDir}`);
@@ -32,7 +21,6 @@ async function generateImagesForChangedFiles(
     return;
   }
 
-  // Get the list of changed files
   const changedFilesProc = spawn([
     'git',
     'diff',
@@ -42,36 +30,30 @@ async function generateImagesForChangedFiles(
   const changedFilesOutput = await new Response(changedFilesProc.stdout).text();
   const changedFiles = changedFilesOutput.split('\n').filter(Boolean);
 
-  // Launch browser
-  const browser = await puppeteer.launch({ headless: false }); // Non-headless for debugging
+  const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
 
   for (const file of changedFiles) {
     try {
-      // Get the content of the file in the target branch
       const contentProc = spawn(['git', 'show', `${targetBranch}:${file}`]);
       const content = await new Response(contentProc.stdout, {
         headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
       }).text();
 
-      // Log the file content for debugging
       console.log(`Code content for ${file}:\n${content}`);
 
-      // Determine the language based on file extension
       const fileExtension = path.extname(file).slice(1);
       const language = mapFileExtensionToLanguage(fileExtension);
 
       console.log(`Processing file: ${file}`);
       console.log(`Detected language: ${language}`);
 
-      // Generate the image
       const imageBuffer = await generateImage(page, content, {
         ...options,
         language,
         title: file,
       });
 
-      // Save the image or export URL depending on the user's choice
       const outputFileName = path.join(
         outputDir,
         `${file.replace(/[\/\\]/g, '_')}.${
@@ -94,7 +76,7 @@ async function generateImagesForChangedFiles(
 async function generateImage(
   page: puppeteer.Page,
   code: string,
-  options: RaySoOptions
+  options: Options
 ): Promise<Uint8Array> {
   const url = `https://ray.so/#code=${encodeURIComponent(
     code
@@ -108,10 +90,8 @@ async function generateImage(
 
   await page.goto(url, { waitUntil: 'networkidle0' });
 
-  // Wait for the frame to render and ensure the code is loaded
   await page.waitForSelector('#frame', { timeout: 10000 });
 
-  // Export format selection based on the current button structure
   if (options.format === 'png') {
     console.log('Attempting to click PNG export button');
     await page.waitForSelector('button[aria-label="Save PNG"]', {
@@ -146,13 +126,12 @@ async function generateImage(
       try {
         return await navigator.clipboard.readText();
       } catch (err) {
-        return ''; // Fallback if clipboard is not accessible
+        return '';
       }
     });
     return new TextEncoder().encode(url);
   }
 
-  // Adjust size if needed
   if (options.size) {
     console.log('Attempting to set image size');
     await page.waitForSelector(`button[data-size="${options.size}"]`, {
@@ -162,7 +141,6 @@ async function generateImage(
     console.log(`Set image size to ${options.size}`);
   }
 
-  // Take a screenshot of the #frame element
   const element = await page.$('#frame');
   if (!element) {
     throw new Error('Could not find #frame element');
@@ -170,7 +148,6 @@ async function generateImage(
 
   let buffer: Uint8Array;
   if (options.format === 'svg') {
-    // Handle SVG format separately
     const svgContent = await page.evaluate(() => {
       const svgElement = document.querySelector('#frame');
       return svgElement ? svgElement.outerHTML : '';
@@ -209,7 +186,7 @@ function parseArguments(): {
   repoPath: string;
   sourceBranch: string;
   targetBranch: string;
-  options: RaySoOptions;
+  options: Options;
   outputDir: string;
 } {
   const args = process.argv.slice(2);
@@ -218,17 +195,17 @@ function parseArguments(): {
   const targetBranch = args[2] || 'HEAD';
   const outputDir = args[3] || './rayso_images';
 
-  const options: RaySoOptions = {
+  const options: Options = {
     theme: 'candy',
     padding: 32,
     background: true,
     darkMode: true,
-    format: 'png', // Default to PNG
-    size: '4x', // Default to 4x
+    format: 'png',
+    size: '4x',
   };
 
   for (let i = 4; i < args.length; i += 2) {
-    const key = args[i].replace('--', '') as keyof RaySoOptions;
+    const key = args[i].replace('--', '') as keyof Options;
     const value = args[i + 1];
 
     if (key in options) {

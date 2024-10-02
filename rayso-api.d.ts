@@ -1,22 +1,25 @@
 declare module 'rayso-api' {
   export class RaySo {
-    constructor(options?: RaySoOptions);
-    cook(code: string): Promise<Buffer>;
+    constructor(options?: Options);
+    cook(code: Options['code']): Promise<Buffer>;
   }
 
-  export interface RaySoOptions {
-    title?: string;
-    theme?: CardTheme;
-    padding?: CardPadding;
-    language?: CardProgrammingLanguage;
-    background?: boolean;
-    darkMode?: boolean;
+  export interface Options {
+    title?: string = 'Untitled-1';
+    theme?: Theme = Theme.CANDY;
+    padding?: Padding = Padding.LG;
+    language?: Language = Language.JAVASCRIPT;
+    darkMode?: boolean = true;
+    width?: number | null = null;
+    background?: boolean = true;
+    code: string = 'bW9kdWxlLmV4cG9ydHMgPSBsZWZ0cGFkOwoKZnVuY3Rpb24gbGVmdHBhZChzdHIsIGxlbiwgY2gpIHsKICBzdHIgPSBTdHJpbmcoc3RyKTsKICB2YXIgaSA9IC0xOwoKICBpZiAoIWNoICYmIGNoICE9PSAwKSBjaCA9ICcgJzsKCiAgbGVuID0gbGVuIC0gc3RyLmxlbmd0aDsKCiAgd2hpbGUgKGkrKyA8IGxlbikgewogICAgc3RyID0gY2ggKyBzdHI7CiAgfQogIHJldHVybiBzdHI7Cn0';
+
     localPreview?: boolean;
     localPreviewPath?: string;
     debug?: boolean;
   }
 
-  export enum CardTheme {
+  export enum Theme {
     VERCEL = 'vercel',
     SUPABASE = 'supabase',
     TAILWIND = 'tailwind',
@@ -36,14 +39,15 @@ declare module 'rayso-api' {
     SUNSET = 'sunset',
   }
 
-  export enum CardPadding {
-    sm = 16,
-    md = 32,
-    lg = 64,
-    xl = 128,
+  export enum Padding {
+    SM = 16,
+    MD = 32,
+    LG = 64,
+    XL = 128,
+    CUSTOM,
   }
 
-  export enum CardProgrammingLanguage {
+  export enum Language {
     AUTO_DETECT = 'auto-detect',
     BASH = 'bash',
     ASTRO = 'astro',
