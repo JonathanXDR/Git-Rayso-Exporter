@@ -1,0 +1,30 @@
+{
+  "name": "git-rayso-exporter",
+  "version": "1.0.0",
+  "description": "",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "puppeteer": "^23.5.0"
+  },
+  "scripts": {
+    "start": "bun index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JonathanXDR/Git-Rayso-Exporter.git"
+  },
+  "author": "Jonathan Russ",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/JonathanXDR/Git-Rayso-Exporter/issues"
+  },
+  "homepage": "https://github.com/JonathanXDR/Git-Rayso-Exporter#readme"
+}
